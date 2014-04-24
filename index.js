@@ -19,18 +19,24 @@ util.inherits(ReadWriteStream, Duplex);
 ReadWriteStream.prototype._write = function(chunk, enc, done) {
   var self = this;
   // chunk has to be a buffer
-
   fs.write(self.fd, chunk, 0, chunk.length, null, function(err, bytesWritten) {
     done(err);
   });
 };
 
-ReadWriteStream.prototype._read = function(size) {
+ReadWriteStream.prototype._readFile = function() {
   var self = this;
-  if(size) {
-    self.readBuffer = new Buffer(size);
-  }
-  fs.read(self.fd, self.readBuffer, readBuffer.length, null, function(err, bytesRead) {
-    self.push(buffer.slice(0, bytesRead));
+  fs.read(self.fd, self.readBuffer, 0, self.readBuffer.length, null, function(err, bytesRead) {
+    if(self.push(self.readBuffer.slice(0, bytesRead))) {
+      self._readFile();
+    }
   });
 };
+
+
+ReadWriteStream.prototype._read = function() {
+  var self = this;
+  self._readFile();
+};
+
+module.exports = ReadWriteStream;
