@@ -7,10 +7,11 @@ function ReadWriteStream(path) {
   var self = this;
   self.path = path;
   self.readBuffer = new Buffer(255);
-  self.fd = 0;
+  self.fd = null;
 
   fs.open(path, 'r+', function(err, fd) {
     self.fd = fd;
+    self.emit('open', fd);
   });
 
 };
@@ -34,8 +35,11 @@ ReadWriteStream.prototype._readFile = function() {
 
 
 ReadWriteStream.prototype._read = function() {
-  var self = this;
-  self._readFile();
+  if(!this.fd) {
+    this.once('open', this._readFile);
+  } else {
+    this._readFile();
+  }
 };
 
 module.exports = ReadWriteStream;
