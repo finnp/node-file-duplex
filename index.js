@@ -19,6 +19,11 @@ util.inherits(ReadWriteStream, Duplex);
 
 ReadWriteStream.prototype._write = function(chunk, enc, done) {
   var self = this;
+  if(!self.fd) {
+    return self.once('open', function() {
+      self._write(chunk, enc, done);
+    });
+  }
   fs.write(self.fd, chunk, 0, chunk.length, null, function(err, bytesWritten) {
     done(err);
   });
