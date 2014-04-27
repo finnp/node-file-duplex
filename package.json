@@ -22,5 +22,9 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/finnp/node-file-duplex/issues"
+  },
+  "dependencies": {
+    "underscore": "~1.6.0",
+    "extend": "~1.2.1"
   }
 }

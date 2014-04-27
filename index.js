@@ -1,50 +1,16 @@
-var util = require('util');
-var fs = require('fs');
 var Duplex = require('stream').Duplex;
+var fs = require('fs');
+var util = require('util');
+var extend = require('extend');
 
-function ReadWriteStream(path) {
+function DuplexStream(path) {
   Duplex.call(this);
-  var self = this;
-  self.path = path;
-  self.readBuffer = new Buffer(255);
-  self.fd = null;
+  fs.ReadStream.call(this, path, {'flags': 'r+'});
+}
+util.inherits(DuplexStream, Duplex);
+// extend(true, DuplexStream.prototype, fs.ReadStream.prototype, fs.WriteStream.prototype);
+DuplexStream.prototype._read = fs.ReadStream.prototype._read;
+DuplexStream.prototype._write = fs.WriteStream.prototype._write;
 
-  fs.open(path, 'r+', function(err, fd) {
-    self.fd = fd;
-    self.emit('open', fd);
-  });
+module.exports = DuplexStream;
 
-};
-util.inherits(ReadWriteStream, Duplex);
-
-ReadWriteStream.prototype._write = function(chunk, enc, done) {
-  var self = this;
-  if(!self.fd) {
-    return self.once('open', function() {
-      self._write(chunk, enc, done);
-    });
-  }
-  fs.write(self.fd, chunk, 0, chunk.length, null, function(err, bytesWritten) {
-    done(err);
-  });
-};
-
-ReadWriteStream.prototype._readFile = function() {
-  var self = this;
-  fs.read(self.fd, self.readBuffer, 0, self.readBuffer.length, null, function(err, bytesRead) {
-    if(self.push(self.readBuffer.slice(0, bytesRead))) {
-      self._readFile();
-    }
-  });
-};
-
-
-ReadWriteStream.prototype._read = function() {
-  if(!this.fd) {
-    this.once('open', this._readFile);
-  } else {
-    this._readFile();
-  }
-};
-
-module.exports = ReadWriteStream;
